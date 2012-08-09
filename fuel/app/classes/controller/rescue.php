@@ -4,6 +4,9 @@ class Controller_Rescue extends Controller_Template
 
 	public function action_index()
 	{
+require_once(APPPATH . '/vendor/enthropia/class.form_generator.php');
+$form = new form_generator();
+
 		$rescue = Model_Rescue::find();
 
 
