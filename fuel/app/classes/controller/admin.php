@@ -265,6 +265,7 @@ class Controller_Admin extends Controller_Template
 	
 	public function action_updatecities($safety_off = NULL)
 	{
+		exit; // already ran, no longer needed
 		if (!Cookie::get('theuser_id'))
 		{
 			Response::redirect('login');
