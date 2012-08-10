@@ -4,62 +4,66 @@ class Controller_Rescue extends Controller_Template
 
 	public function action_index()
 	{
-//require_once(APPPATH . '/vendor/enthropia/class.form_generator.php');
-//$form = new form_generator();
 
 		$rescue = Model_Rescue::find();
-
-
-		if (Input::post('city_id')) {
-			$rescue->where('city_id', Input::post('city_id'));
-			$city = Model_City::find(Input::post('city_id'));
-			$this->template->set_global('city', $city, false);
-
-			$pointer = $rescue->get();
-			$this->template->set_global('pointer', $pointer, false);
-
-			$lat = Model_Rescue::find()
-						->where("lat", "!=", "")
-						->where("city_id", Input::post('city_id'))
-						->order_by("id", "DESC")
-						->limit(100)
-						->get();
-
+		
+		if (Input::post('areaSelect', false)) {
+			$areaSelect = Input::post('areaSelect');
+			if (strpos($areaSelect, 'REGION|') !== FALSE) {
+				// its a region
+				$regionId = explode('|', str_replace('REGION|', '', $areaSelect));
+				$region = Model_GeoRegionName::find($regionId);
+				$this->template->set_global('regionInfo', $region, false);
+				
+				$cities = $region->GeoCityNames;
+				
+				if ($region->region_name != 'Metro Manila') {
+					$areaCitySelectOptions = General::getAreaCitySelectOptions($cities);
+					$this->template->set_global('areaCitySelectOptions', $areaCitySelectOptions, false);
+				}
+				
+			} elseif (strpos($areaSelect, 'CITY|') !== FALSE) {
+				// its a city
+				$cityId = (int) str_replace('CITY|', '', $areaSelect);
+				$city = Model_GeoCityName::find($cityId);
+				$this->template->set_global('cityInfo', $city, false);
+			}
 		}
-		else
-		{
-			$lat = Model_Rescue::find()
-						->where("lat", "!=", "")
-						->order_by("id", "DESC")
-						->limit(5)
-						->get();
+		
+		if (Input::post('areaCitySelect', false)) {
+			$cityId = (int) Input::post('areaCitySelect');
+			$city = Model_GeoCityName::find($cityId);
+			$this->template->set_global('cityInfo', $city, false);
 		}
 
-		$this->template->set_global('lat', $lat, false);
-
-
-		$pointer = $rescue->get();
-		$this->template->set_global('pointer', $pointer, false);
-
-		$rescue->order_by('id','desc')->limit(30);
-		$r = $rescue->get();
-		$data['rescues'] = $r;
+		if (isset($cityId) && $cityId) {
+			
+			$rescue->where('city_id', (int) $cityId);
+			
+		} elseif (isset($regionId) && !empty($cities)) {
+			
+			$cityIds = array();
+			foreach ($cities as $city) { $cityIds[] = $city->city_id; }
+			if (!empty($cityIds)) {
+				$rescue->where('city_id', 'in', (array) $cityIds);
+			}
+				
+		}
+		
+		// list of rescues
+		$data['rescues'] = $rescue
+							->order_by('id','desc')
+							->limit(30)
+							->get();
 		$this->template->title = "#RescuePH";
 		$this->template->content = View::forge('rescue/index', $data);
-
-		//cities
-
-
-		$categories = Model_city::find()
-					->order_by('name')
-					->get();
-		$c = array(""=>" by city ");
-		foreach ($categories as $cat) {
-			$c[$cat->id] = $cat->name;
-		}
-		$this->template->set_global('cities', $c, false);
-
+		
+		//areaSelectOptions
+		$areaSelectOptions = General::getAreaSelectOptions();
+		$this->template->set_global('areaSelectOptions', $areaSelectOptions, false);
 	}
+	
+	
 	public function action_test()
 	{
 		$rescue = Model_Rescue::find();
@@ -143,15 +147,15 @@ class Controller_Rescue extends Controller_Template
 					$theuser_id = '1';
 				}
 
-				$city = Model_City::find(Input::post('city_id'));
+				//$city = Model_City::find(Input::post('city_id'));
+				$city = Model_GeoCityName::find(Input::post('city_id'));
 
-				$lat = Input::post('address'). " ". $city->name. ", Philippines";
-
-				//echo $lat;
-				//exit;
+				$lat = Input::post('address'). " ". $city->city_region_name. ", Philippines";
 
 				$long = General::latlong($lat);
-
+				
+				//echo $lat; echo $long; exit;				
+				
 				if ($long)
 				{
 					$latlong = explode(",", $long);
@@ -201,21 +205,7 @@ class Controller_Rescue extends Controller_Template
 		$this->template->title = "Rescues";
 		$this->template->content = View::forge('rescue/create');
 
-		//cities
-
-
-		$categories = Model_city::find()
-					->order_by('name')
-					->get();
-		$c = array(""=>" -- ");
-		foreach ($categories as $cat) {
-			$c[$cat->id] = $cat->name;
-		}
-		$this->template->set_global('cities', $c, false);
-
 		//status
-
-
 		$categories = Model_Status::find()
 					->get();
 		$c = array(""=>" -- ");
@@ -223,7 +213,10 @@ class Controller_Rescue extends Controller_Template
 			$c[$cat->id] = $cat->name;
 		}
 		$this->template->set_global('statuses', $c, false);
-
+		
+		//citySelectOptions
+		$citySelectOptions = General::getAreaSelectOptions(2);
+		$this->template->set_global('citySelectOptions', $citySelectOptions, false);
 
 	}
 
@@ -289,21 +282,7 @@ class Controller_Rescue extends Controller_Template
 		$this->template->title = "Rescues";
 		$this->template->content = View::forge('rescue/edit');
 
-			//cities
-
-
-		$categories = Model_city::find()
-					->order_by('name')
-					->get();
-		$c = array(""=>" -- ");
-		foreach ($categories as $cat) {
-			$c[$cat->id] = $cat->name;
-		}
-		$this->template->set_global('cities', $c, false);
-
 		//status
-
-
 		$categories = Model_Status::find()
 					->get();
 		$c = array(""=>" -- ");
@@ -311,6 +290,10 @@ class Controller_Rescue extends Controller_Template
 			$c[$cat->id] = $cat->name;
 		}
 		$this->template->set_global('statuses', $c, false);
+		
+		//citySelectOptions
+		$citySelectOptions = General::getAreaSelectOptions(2);
+		$this->template->set_global('citySelectOptions', $citySelectOptions, false);
 
 	}
 

@@ -32,8 +32,11 @@ Messages are not limited to pleas for help, we also accept and encourage "situat
 			<?php echo Form::label('City', 'city'); ?>
 
 			<div class="input">
-				<?php echo Form::select('city_id', Input::post('city_id', isset($rescue) ? $rescue->city_id : ''), $cities, array('class' => 'span6')); ?>
-
+				<?php
+				require_once(APPPATH . '/vendor/enthropia/class.form_generator.php');
+				$form = new form_generator();
+				echo $form->selectbox('city_id', (array) $citySelectOptions, 0, Input::post('city_id', isset($rescue) ? $rescue->city_id : ''), 'id="citySelect" class="span6"');
+				?>
 			</div>
 		</div>
 

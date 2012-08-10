@@ -73,7 +73,7 @@ class form_generator {
 		define('DATESELECT',++$const);
 		define('DATETIMESELECT',++$const);
 		define('CRLFT',"\n   "); // with a tab
-		define('CRLF',"\n");
+		//define('CRLF',"\n");
 		define('CUSTOM',++$const);
 		define('FILESELECT',++$const);
 

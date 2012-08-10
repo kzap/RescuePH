@@ -1,16 +1,26 @@
 <p>
-<?php echo Form::open('admin/') ?><?php echo Form::select('city_id', Input::post('city_id', isset($rescue) ? $rescue->city_id : ''), $cities, array('class' => 'span4')); ?>	<?php echo Form::select('status_id', Input::post('status_id', isset($rescue) ? $rescue->status_id : ''), $statuses, array('class' => 'span4')); ?> <?php echo Form::submit('submit', "Sort", array('class'=>'btn')) ?> | <?php echo Html::anchor('rescue/create', 'New Rescue Request', array('class' => 'btn success')); ?></form>
+<?php
+require_once(APPPATH . '/vendor/enthropia/class.form_generator.php');
+$form = new form_generator();
+echo $form->open('areaFilter', 'POST', '/admin/', 'id="areaFilter"');
+echo $form->selectbox('areaSelect', (array) $areaSelectOptions, 0, Input::post('areaSelect'), 'id="areaSelect" class="span4"');
+echo $form->selectbox('areaCitySelect', (array) $areaCitySelectOptions, 0, Input::post('areaCitySelect'), 'id="areaCitySelect" class="span4" style="' . (!empty($areaCitySelectOptions) ? '' : 'display: none;') . '"');
+echo $form->selectbox('status_id', (array) $statuses, 0, Input::post('status_id'), 'class="span4"');
+echo $form->submit('submit', 'View', 'class="btn"');
+echo '&nbsp;|&nbsp;';
+echo Html::anchor('rescue/create', 'New Rescue Request', array('class' => 'btn success'));
+echo $form->close();
+?>
 
 </p>
 
 
 </div>
-<h2><?php if (Input::post('city_id')): ?>
-<?php echo $city->name ?>
-<?php endif ?>
-<?php if (Input::post('status_id')): ?>
-	<?php echo $status->name ?>
-<?php endif ?>
+<h2>
+<?php
+if (!empty($cityInfo)) { echo $cityInfo->city_region_name; }
+if (!empty($status)) { echo '&nbsp;' . $status->name; }
+?>
 </h2>
 <br>
 <?php if ($rescues): ?>
@@ -19,11 +29,11 @@
 		<tr>
 			<th>Name</th>
 			<th>Address</th>
-			<th>City id</th>
+			<th>City</th>
 			<th>Specifics</th>
 			<th>Reporter</th>
 			<th>Source</th>
-			<th>Status id</th>
+			<th>Status</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -32,7 +42,7 @@
 
 			<td><?php echo $rescue->name; ?></td>
 			<td><?php echo $rescue->address; ?></td>
-			<td><?php echo $rescue->city->name; ?></td>
+			<td><?php echo $rescue->GeoCityNames->city_region_name; ?></td>
 			<td><?php echo $rescue->specifics; ?></td>
 			<td><?php echo $rescue->reporter; ?></td>
 			<td><?php echo $rescue->source; ?></td>
@@ -43,7 +53,7 @@
 				<?php else: ?>
 					green
 				<?php endif ?>"><?php echo $rescue->status->name; ?></span></td>
-			<td><?php echo $rescue->theuser->name ?></td>
+			<td><?php if (!empty($rescue->theuser)) { echo $rescue->theuser->name; } ?></td>
 			<td style="font-size:10px">
 				<?php echo Html::anchor('admin/edit/'.$rescue->id, 'Update status'); ?> |
 				<?php echo Html::anchor('admin/delete/'.$rescue->id, 'Delete', array('onclick' => "return confirm('Are you sure?')")); ?>

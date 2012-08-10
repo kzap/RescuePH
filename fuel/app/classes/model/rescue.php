@@ -17,7 +17,14 @@ class Model_Rescue extends Model
 		'lng'
 	);
 
-	protected static $_belongs_to = array('city', 'status','theuser');
+	protected static $_belongs_to = array(
+		'GeoCityNames' => array(
+			'key_from' => array('city_id'),
+			'key_to' => array('city_id'),
+		),
+		'status', 
+		'theuser'
+	);
 
 
 	public static function validate($factory)
